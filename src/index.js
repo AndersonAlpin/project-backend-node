@@ -3,9 +3,9 @@ const PORT = 3000;
 const app = express();
 const router = require("./routes/index");
 
-app.get('/favicon.ico', function(req, res) { 
+app.get("/favicon.ico", function (req, res) {
   res.status(204);
-  res.end();    
+  res.end();
 });
 
 app.use(express.urlencoded({ extended: false }));
