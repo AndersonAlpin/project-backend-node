@@ -35,9 +35,14 @@ class GameController {
   }
 
   async addFavorite(req, res) {
-    const favorite = req.body;
+    let favorite = req.body;
     await gameRepository.addFavorite(favorite);
     res.json({ favorite });
+  }
+
+  async getFavorites(req, res) {
+    let favorites = await gameRepository.getFavorites();
+    res.json({ favorites });
   }
 }
 

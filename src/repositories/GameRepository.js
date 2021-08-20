@@ -17,6 +17,10 @@ class GameRepository {
 
     return data;
   }
+
+  async getFavorites() {
+    return await this._currentFile();
+  }
 }
 
 module.exports = GameRepository;
