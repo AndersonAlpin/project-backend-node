@@ -1,0 +1,28 @@
+{
+  "dependencies": {
+    "express": "^4.17.1"
+  },
+  "name": "project-backend-node",
+  "description": "",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/index.js",
+    "dev": "npx nodemon src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AndersonAlpin/project-backend-node.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AndersonAlpin/project-backend-node/issues"
+  },
+  "homepage": "https://github.com/AndersonAlpin/project-backend-node#readme",
+  "devDependencies": {
+    "nodemon": "^2.0.12"
+  }
+}
