@@ -1,7 +1,4 @@
 {
-  "dependencies": {
-    "express": "^4.17.1"
-  },
   "name": "project-backend-node",
   "description": "",
   "version": "1.0.0",
@@ -10,6 +7,10 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/index.js",
     "dev": "npx nodemon src/index.js"
+  },
+  "dependencies": {
+    "axios": "^0.21.1",
+    "express": "^4.17.1"
   },
   "repository": {
     "type": "git",
