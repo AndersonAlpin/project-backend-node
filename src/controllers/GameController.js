@@ -36,6 +36,13 @@ class GameController {
 
   async addFavorite(req, res) {
     let favorite = req.body;
+
+    if (JSON.stringify(favorite) === "{}") {
+      return res.json({
+        msg: "Por favor, informe os dados que deseja salvar.",
+      });
+    }
+
     await gameRepository.addFavorite(favorite);
     res.json({ favorite });
   }
