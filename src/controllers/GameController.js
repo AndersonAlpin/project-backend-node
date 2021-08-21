@@ -35,16 +35,28 @@ class GameController {
   }
 
   async addFavorite(req, res) {
-    let newFavorite = req.body;
+    let { id, rating } = req.body;
+    let { email } = req.headers;
+    let user = {
+      email,
+    };
 
-    if (JSON.stringify(newFavorite) === "{}") {
-      return res.json({
-        msg: "Por favor, informe os dados que deseja salvar.",
-      });
+    if (!id) {
+      return res.json({ msg: "Por favor, insira um ID válido." });
     }
 
-    await gameRepository.addFavorite(newFavorite);
-    res.json({ newFavorite });
+    if (rating < 0 || rating > 5) {
+      return res.json({ msg: "Por favor, insira uma nota entre 0 e 5." });
+    }
+
+    let data = await axios.get(`${URL_ONE_GAME}${id}`);
+    let newFavorite = data.data;
+
+    newFavorite.rating = rating;
+    user.favorites = newFavorite;
+
+    await gameRepository.addFavorite(user);
+    res.json({ user });
   }
 
   async getFavorites(req, res) {
