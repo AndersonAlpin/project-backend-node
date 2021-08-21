@@ -36,7 +36,7 @@ class GameController {
 
   async addFavorite(req, res) {
     let { id, rating } = req.body;
-    let { email } = req.headers;
+    let email = req.headers.email;
 
     if (!id) {
       return res.json({ msg: "Por favor, insira um ID válido." });
@@ -74,6 +74,7 @@ class GameController {
 
   async deleteFavorite(req, res) {
     let appid = req.params.appid;
+    let email = req.headers.email;
 
     if (isNaN(appid)) {
       return res.json({
@@ -81,7 +82,11 @@ class GameController {
       });
     }
 
-    let favoriteDeleted = await gameRepository.deleteFavorite(appid);
+    if (!email) {
+      return res.json({ msg: "Você precisa especificar um email no header." });
+    }
+
+    let favoriteDeleted = await gameRepository.deleteFavorite(email, appid);
 
     if (!favoriteDeleted) {
       return res.json({ msg: "Estes dados não existem." });

@@ -18,12 +18,12 @@ class GameRepository {
     return data;
   }
 
-  async getFavorites(header) {
+  async getFavorites(email) {
     const files = await this._currentFile();
     let favorites = [];
 
     files.forEach((file) => {
-      if (file.email === header) {
+      if (file.email === email) {
         favorites.push(file);
       }
     });
@@ -31,12 +31,12 @@ class GameRepository {
     return favorites;
   }
 
-  async deleteFavorite(id) {
+  async deleteFavorite(email, id) {
     const files = await this._currentFile();
     let fileDeleted = "";
 
     files.forEach((file, index) => {
-      if (file[id]) {
+      if (file.email === email && file[id]) {
         files.splice(index, 1);
         fileDeleted = file;
       }
