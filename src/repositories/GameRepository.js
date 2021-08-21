@@ -21,6 +21,22 @@ class GameRepository {
   async getFavorites() {
     return await this._currentFile();
   }
+
+  async deleteFavorite(id) {
+    const files = await this._currentFile();
+    let fileDeleted = "";
+
+    files.forEach((file, index) => {
+      if (file[id]) {
+        files.splice(index, 1);
+        fileDeleted = file;
+      }
+    });
+
+    await writeFile(this.file, JSON.stringify(files));
+
+    return fileDeleted;
+  }
 }
 
 module.exports = GameRepository;

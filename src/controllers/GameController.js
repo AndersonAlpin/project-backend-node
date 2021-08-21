@@ -35,21 +35,39 @@ class GameController {
   }
 
   async addFavorite(req, res) {
-    let favorite = req.body;
+    let newFavorite = req.body;
 
-    if (JSON.stringify(favorite) === "{}") {
+    if (JSON.stringify(newFavorite) === "{}") {
       return res.json({
         msg: "Por favor, informe os dados que deseja salvar.",
       });
     }
 
-    await gameRepository.addFavorite(favorite);
-    res.json({ favorite });
+    await gameRepository.addFavorite(newFavorite);
+    res.json({ newFavorite });
   }
 
   async getFavorites(req, res) {
     let favorites = await gameRepository.getFavorites();
     res.json({ favorites });
+  }
+
+  async deleteFavorite(req, res) {
+    let appid = req.params.appid;
+
+    if (isNaN(appid)) {
+      return res.json({
+        msg: "Por favor, insira um ID válido.",
+      });
+    }
+
+    let favoriteDeleted = await gameRepository.deleteFavorite(appid);
+
+    if (!favoriteDeleted) {
+      return res.json({ msg: "Estes dados não existem." });
+    }
+
+    return res.json({ favoriteDeleted });
   }
 }
 

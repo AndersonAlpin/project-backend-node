@@ -5,6 +5,7 @@ const GameController = require("../controllers/GameController");
 // Meus favoritos
 router.post("/favorite/", GameController.addFavorite);
 router.get("/favorite/", GameController.getFavorites);
+router.delete("/favorite/:appid", GameController.deleteFavorite)
 
 // Jogos da Steam
 router.get("/", GameController.getAll);
