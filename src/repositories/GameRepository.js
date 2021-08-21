@@ -18,8 +18,17 @@ class GameRepository {
     return data;
   }
 
-  async getFavorites() {
-    return await this._currentFile();
+  async getFavorites(header) {
+    const files = await this._currentFile();
+    let favorites = [];
+
+    files.forEach((file) => {
+      if (file.email === header) {
+        favorites.push(file);
+      }
+    });
+
+    return favorites;
   }
 
   async deleteFavorite(id) {

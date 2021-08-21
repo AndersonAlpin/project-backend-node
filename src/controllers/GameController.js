@@ -60,7 +60,18 @@ class GameController {
   }
 
   async getFavorites(req, res) {
-    let favorites = await gameRepository.getFavorites();
+    let { email } = req.headers;
+
+    if (!email) {
+      return res.json({ msg: "Você precisa especificar um email no header." });
+    }
+
+    let favorites = await gameRepository.getFavorites(email);
+
+    if (favorites.length === 0) {
+      return res.json({ msg: "Nenhum dado encontrado." });
+    }
+
     res.json({ favorites });
   }
 
