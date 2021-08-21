@@ -37,9 +37,6 @@ class GameController {
   async addFavorite(req, res) {
     let { id, rating } = req.body;
     let { email } = req.headers;
-    let user = {
-      email,
-    };
 
     if (!id) {
       return res.json({ msg: "Por favor, insira um ID válido." });
@@ -53,10 +50,10 @@ class GameController {
     let newFavorite = data.data;
 
     newFavorite.rating = rating;
-    user.favorites = newFavorite;
+    newFavorite.email = email;
 
-    await gameRepository.addFavorite(user);
-    res.json({ user });
+    await gameRepository.addFavorite(newFavorite);
+    res.json({ newFavorite });
   }
 
   async getFavorites(req, res) {
