@@ -114,7 +114,8 @@ class GameController {
 
   async deleteFavorite(req, res) {
     let appid = req.params.appid;
-    let email = req.headers.email;
+    let { email, password } = req.headers;
+    let isPasswordRight = "";
 
     if (isNaN(appid)) {
       return res.json({
@@ -122,17 +123,28 @@ class GameController {
       });
     }
 
-    if (!email) {
-      return res.json({ msg: "Você precisa especificar um email no header." });
+    // VALIDAÇÃO DE USUÁRIO
+    let user = await User.findOne({ email });
+
+    if (user) {
+      isPasswordRight = await bcrypt.compare(password, user.password);
     }
 
-    let favoriteDeleted = await gameRepository.deleteFavorite(email, appid);
-
-    if (!favoriteDeleted) {
-      return res.json({ msg: "Estes dados não existem." });
+    if (user && !isPasswordRight) {
+      return res.json({
+        message:
+          "Senha incorreta. Crie um novo login caso seja o seu primeiro acesso.",
+      });
     }
 
-    return res.json({ favoriteDeleted });
+    // VERIFICA SE O FAVORITO EXISTE ANTES DE TENTAR DELETÁ-LO
+    let gameFavorite = await Game.findOne({ appid });
+    if (!gameFavorite) {
+      return res.json({ message: "Este jogo não existe." });
+    }
+
+    await Game.deleteOne(gameFavorite);
+    return res.json({ message: "Jogo deletado com sucesso." });
   }
 }
 
