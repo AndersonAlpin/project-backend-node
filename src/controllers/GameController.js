@@ -90,19 +90,26 @@ class GameController {
   }
 
   async getFavorites(req, res) {
-    let { email } = req.headers;
+    let { email, password } = req.headers;
+    let isPasswordRight = "";
 
-    if (!email) {
-      return res.json({ msg: "Você precisa especificar um email no header." });
+    // VALIDAÇÃO DE USUÁRIO
+    let user = await User.findOne({ email });
+
+    if (user) {
+      isPasswordRight = await bcrypt.compare(password, user.password);
     }
 
-    let favorites = await gameRepository.getFavorites(email);
-
-    if (favorites.length === 0) {
-      return res.json({ msg: "Nenhum dado encontrado." });
+    if (user && !isPasswordRight) {
+      return res.json({
+        message:
+          "Senha incorreta. Crie um novo login caso seja o seu primeiro acesso.",
+      });
     }
 
-    res.json({ favorites });
+    // RETORNA A LISTA DE FAVORITOS
+    let favorites = await Game.find({ user_id: user._id });
+    return res.json({ favorites });
   }
 
   async deleteFavorite(req, res) {
