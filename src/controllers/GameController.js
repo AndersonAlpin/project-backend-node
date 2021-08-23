@@ -79,7 +79,7 @@ class GameController {
   }
 
   async addFavorite(req, res) {
-    let user_hash = req.headers.user_hash;
+    let user_hash = req.headers["user-hash"];
     let { appid, rating } = req.body;
     let errors = [];
 
@@ -146,7 +146,7 @@ class GameController {
   }
 
   async getFavorites(req, res) {
-    let user_hash = req.headers.user_hash;
+    let user_hash = req.headers["user-hash"];
 
     try {
       // BUSCA DE UM USUÁRIO
@@ -167,7 +167,7 @@ class GameController {
   }
 
   async deleteFavorite(req, res) {
-    let user_hash = req.headers.user_hash;
+    let user_hash = req.headers["user-hash"];
     let appid = req.params.appid;
 
     try {
