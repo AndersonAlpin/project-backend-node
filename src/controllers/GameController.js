@@ -23,7 +23,7 @@ const getCache = (key) => {
 
 const setCache = (key, value) => {
   return new Promise((resolve, reject) => {
-    redisClient.set(key, value, "EX", 60, (err) => {
+    redisClient.set(key, value, "EX", 120, (err) => {
       if (err) {
         reject(err);
       } else {
@@ -44,7 +44,7 @@ class GameController {
     try {
       const data = await axios.get(URL_ALL_GAMES);
       const games = data.data.applist.apps;
-      
+
       res.json({ games });
       await setCache("games", JSON.stringify(games));
     } catch (error) {
