@@ -42,8 +42,7 @@ class GameController {
 
   async addFavorite(req, res) {
     let { appid, rating } = req.body;
-    let { email, password } = req.headers;
-    let isPasswordRight = "";
+    let user_hash = req.headers.user_hash;
     let errors = [];
 
     // VALIDAÇÕES
@@ -55,12 +54,10 @@ class GameController {
       errors.push({ rating: "A nota deve ser um valor entre 0 e 5." });
     }
 
-    if (!emailRegex.test(email)) {
-      errors.push({ email: "Digite um email válido." });
-    }
-
-    if (password.length < 6) {
-      errors.push({ password: "A senha precisa ter no mínimo 6 dígitos." });
+    if (!isNaN(user_hash) || user_hash.length < 3) {
+      errors.push({
+        user_hash: "Seu usuário precisa ter no mínimo 3 dígitos.",
+      });
     }
 
     if (errors.length > 0) {
@@ -69,30 +66,17 @@ class GameController {
 
     try {
       // BUSCA DE UM USUÁRIO
-      let user = await User.findOne({ email });
-
-      if (!user) {
-        errors.push({ email: "Este email não existe." });
-        return res.json({ errors });
-      }
-
-      if (user) {
-        isPasswordRight = await bcrypt.compare(password, user.password);
-      }
-
-      if (user && !isPasswordRight) {
-        return res.status(401).send({
-          message:
-            "Senha incorreta. Crie um novo login caso seja o seu primeiro acesso.",
-        });
-      }
+      let user = await User.findOne({ user_hash });
 
       // VERIFICA SE O FAVORITO JÁ ESTÁ CADASTRADO
-      let gameFavorite = await Game.findOne({ appid });
-      if (user && gameFavorite) {
-        return res
-          .status(409)
-          .send({ message: "Este jogo já esta salvo nos favoritos." });
+      if (user) {
+        let gameFavorite = await Game.findOne({ user_id: user._id, appid });
+
+        if (gameFavorite) {
+          return res
+            .status(409)
+            .send({ message: "Este jogo já esta salvo nos favoritos." });
+        }
       }
 
       // BUSCA UM GAME NO SERVIDOR
@@ -109,10 +93,8 @@ class GameController {
       }
 
       // ADICIONA UM NOVO USUÁRIO ANTES DE INSERIR UM FAVORITO
-      let hash = bcrypt.hashSync(password, 10);
       let newUser = await User.create({
-        email,
-        password: hash,
+        user_hash,
       });
 
       game.user_id = newUser._id;
@@ -126,41 +108,14 @@ class GameController {
   }
 
   async getFavorites(req, res) {
-    let { email, password } = req.headers;
-    let isPasswordRight = "";
-    let errors = [];
-
-    // VALIDAÇÕES
-    if (!emailRegex.test(email)) {
-      errors.push({ email: "Digite um email válido." });
-    }
-
-    if (password.length < 6) {
-      errors.push({ password: "A senha precisa ter no mínimo 6 dígitos." });
-    }
-
-    if (errors.length > 0) {
-      return res.json({ errors });
-    }
+    let user_hash = req.headers.user_hash;
 
     try {
       // BUSCA DE UM USUÁRIO
-      let user = await User.findOne({ email });
+      let user = await User.findOne({ user_hash });
 
       if (!user) {
-        errors.push({ email: "Este email não existe." });
-        return res.json({ errors });
-      }
-
-      if (user) {
-        isPasswordRight = await bcrypt.compare(password, user.password);
-      }
-
-      if (user && !isPasswordRight) {
-        return res.status(401).send({
-          message:
-            "Senha incorreta. Crie um novo login caso seja o seu primeiro acesso.",
-        });
+        return res.json({ message: "Este usuário não existe." });
       }
 
       // RETORNA A LISTA DE FAVORITOS
@@ -174,50 +129,19 @@ class GameController {
   }
 
   async deleteFavorite(req, res) {
-    let { email, password } = req.headers;
+    let user_hash = req.headers.user_hash;
     let appid = req.params.appid;
-    let isPasswordRight = "";
-    let errors = [];
-
-    // VALIDAÇÕES
-    if (isNaN(appid)) {
-      errors.push({ appid: "O campo appid precisa ser um número" });
-    }
-
-    if (!emailRegex.test(email)) {
-      errors.push({ email: "Digite um email válido." });
-    }
-
-    if (password.length < 6) {
-      errors.push({ password: "A senha precisa ter no mínimo 6 dígitos." });
-    }
-
-    if (errors.length > 0) {
-      return res.json({ errors });
-    }
 
     try {
       // BUSCA DE UM USUÁRIO
-      let user = await User.findOne({ email });
+      let user = await User.findOne({ user_hash });
 
       if (!user) {
-        errors.push({ email: "Este email não existe." });
-        return res.json({ errors });
-      }
-
-      if (user) {
-        isPasswordRight = await bcrypt.compare(password, user.password);
-      }
-
-      if (user && !isPasswordRight) {
-        return res.status(401).send({
-          message:
-            "Senha incorreta. Crie um novo login caso seja o seu primeiro acesso.",
-        });
+        return res.json({ message: "Este usuário não existe." });
       }
 
       // VERIFICA SE O FAVORITO EXISTE ANTES DE TENTAR DELETÁ-LO
-      let gameFavorite = await Game.findOne({ appid });
+      let gameFavorite = await Game.findOne({ user_id: user._id, appid });
       if (!gameFavorite) {
         return res.status(404).send({ message: "Este jogo não existe." });
       }
