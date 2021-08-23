@@ -1,27 +1,57 @@
 const axios = require("axios");
-const bcrypt = require("bcrypt");
+const redis = require("redis");
 const User = require("../models/User");
 const Game = require("../models/Game");
 
 const URL_ALL_GAMES =
   "https://api.steampowered.com/ISteamApps/GetAppList/v0002/?format=json";
 const URL_ONE_GAME = "https://store.steampowered.com/api/appdetails?appids=";
-const emailRegex =
-  /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+
+const redisClient = redis.createClient();
+
+const getCache = (key) => {
+  return new Promise((resolve, reject) => {
+    redisClient.get(key, (err, value) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(value);
+      }
+    });
+  });
+};
+
+const setCache = (key, value) => {
+  return new Promise((resolve, reject) => {
+    redisClient.set(key, value, "EX", 60, (err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(true);
+      }
+    });
+  });
+};
 
 class GameController {
   async getAll(req, res) {
-    await axios
-      .get(URL_ALL_GAMES)
-      .then((data) => {
-        res.send(data.data.applist.apps);
-      })
-      .catch((error) => {
-        return res.status(500).send({
-          message:
-            "Erro na comunicação com o servidor da steam. Verifique se você digitou a url corretamente",
-        });
+    const games = await getCache("games");
+
+    if (games) {
+      return res.send(JSON.parse(games));
+    }
+
+    try {
+      const data = await axios.get(URL_ALL_GAMES);
+      const games = data.data.applist.apps;
+      res.json({ games });
+      await setCache("games", JSON.stringify(games));
+    } catch (error) {
+      return res.status(500).send({
+        message:
+          "Erro na comunicação com o servidor da steam. Verifique se você digitou a url corretamente",
       });
+    }
   }
 
   async getOne(req, res) {
@@ -41,8 +71,8 @@ class GameController {
   }
 
   async addFavorite(req, res) {
-    let { appid, rating } = req.body;
     let user_hash = req.headers.user_hash;
+    let { appid, rating } = req.body;
     let errors = [];
 
     // VALIDAÇÕES
