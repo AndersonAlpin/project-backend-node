@@ -44,6 +44,7 @@ class GameController {
     try {
       const data = await axios.get(URL_ALL_GAMES);
       const games = data.data.applist.apps;
+      
       res.json({ games });
       await setCache("games", JSON.stringify(games));
     } catch (error) {
@@ -55,19 +56,26 @@ class GameController {
   }
 
   async getOne(req, res) {
-    let id = req.params.id;
+    const id = req.params.id;
 
-    await axios
-      .get(`${URL_ONE_GAME}${id}`)
-      .then((data) => {
-        res.send(data.data);
-      })
-      .catch((error) => {
-        return res.status(500).send({
-          message:
-            "Erro na comunicação com o servidor da steam. Verifique se você digitou a url corretamente",
-        });
+    const game = await getCache(`id-${id}`);
+
+    if (game) {
+      return res.send(JSON.parse(game));
+    }
+
+    try {
+      const data = await axios.get(`${URL_ONE_GAME}${id}`);
+      const game = data.data;
+
+      res.json({ game });
+      await setCache(`id-${id}`, JSON.stringify(game));
+    } catch (error) {
+      return res.status(500).send({
+        message:
+          "Erro na comunicação com o servidor da steam. Verifique se você digitou a url corretamente",
       });
+    }
   }
 
   async addFavorite(req, res) {
