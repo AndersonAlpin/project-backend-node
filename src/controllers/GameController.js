@@ -1,10 +1,8 @@
 const axios = require("axios");
 const redis = require("redis");
-const User = require("../models/User");
-const Game = require("../models/Game");
+const { User, Game } = require("../database/mongoose");
 
-const URL_ALL_GAMES =
-  "https://api.steampowered.com/ISteamApps/GetAppList/v0002/?format=json";
+const URL_ALL_GAMES = "https://api.steampowered.com/ISteamApps/GetAppList/v0002/?format=json";
 const URL_ONE_GAME = "https://store.steampowered.com/api/appdetails?appids=";
 
 const redisClient = redis.createClient();
@@ -99,7 +97,7 @@ class GameController {
     }
 
     if (errors.length > 0) {
-      return res.json({ errors });
+      return res.status(400).json({ errors });
     }
 
     try {
@@ -153,7 +151,7 @@ class GameController {
       let user = await User.findOne({ user_hash });
 
       if (!user) {
-        return res.json({ message: "Este usuário não existe." });
+        return res.status(404).json({ message: "Este usuário não existe." });
       }
 
       // RETORNA A LISTA DE FAVORITOS
@@ -175,7 +173,7 @@ class GameController {
       let user = await User.findOne({ user_hash });
 
       if (!user) {
-        return res.json({ message: "Este usuário não existe." });
+        return res.status(404).json({ message: "Este usuário não existe." });
       }
 
       // VERIFICA SE O FAVORITO EXISTE ANTES DE TENTAR DELETÁ-LO
