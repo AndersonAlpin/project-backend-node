@@ -92,7 +92,7 @@ class GameController {
 
     if (!isNaN(user_hash) || user_hash.length < 3) {
       errors.push({
-        user_hash: "Seu usuário precisa ter no mínimo 3 dígitos.",
+        "user-hash": "Seu usuário precisa ter no mínimo 3 dígitos.",
       });
     }
 
@@ -115,9 +115,16 @@ class GameController {
         }
       }
 
-      // BUSCA UM GAME NO SERVIDOR
-      let data = await axios.get(`${URL_ONE_GAME}${appid}`);
-      let game = data.data;
+      // VERIFICA SE POSSUI O JOGO NO CACHE ANTES DE BUSCAR NA STEAM
+      let data = await getCache(`id-${appid}`);
+      let game = JSON.parse(data);
+
+      if (!game) {
+        let data = await axios.get(`${URL_ONE_GAME}${appid}`);
+        game = data.data;
+        await setCache(`id-${appid}`, JSON.stringify(game));
+      }
+
       game.rating = rating;
       game.appid = appid;
 
@@ -151,7 +158,9 @@ class GameController {
       let user = await User.findOne({ user_hash });
 
       if (!user) {
-        return res.status(404).json({ message: "Este usuário não existe." });
+        return res
+          .status(404)
+          .json({ "user-hash": "Este usuário não existe." });
       }
 
       // RETORNA A LISTA DE FAVORITOS
@@ -173,7 +182,9 @@ class GameController {
       let user = await User.findOne({ user_hash });
 
       if (!user) {
-        return res.status(404).json({ message: "Este usuário não existe." });
+        return res
+          .status(404)
+          .json({ "user-hash": "Este usuário não existe." });
       }
 
       // VERIFICA SE O FAVORITO EXISTE ANTES DE TENTAR DELETÁ-LO
