@@ -1,7 +1,6 @@
 require("dotenv/config");
 
 const express = require("express");
-const PORT = 3000;
 const app = express();
 const GameController = require("./controllers/GameController");
 
@@ -17,6 +16,4 @@ app.delete("/favorite/:appid", GameController.deleteFavorite);
 app.get("/", GameController.getAll);
 app.get("/:id", GameController.getOne);
 
-app.listen(PORT, () => {
-  console.log(`Servidor rodando em http://localhost:${PORT}`);
-});
+module.exports = app;
