@@ -83,17 +83,19 @@ class GameController {
     let data = await getCache(`id-${appid}`);
     let game = JSON.parse(data);
 
-    if (!game) {
+    if (!game && appid) {
       let data = await axios.get(`${URL_ONE_GAME}${appid}`);
       game = data.data;
       await setCache(`id-${appid}`, JSON.stringify(game));
     }
 
-    game.rating = rating;
-    game.appid = appid;
+    if (game) {
+      game.rating = rating;
+      game.appid = appid;
+    }
 
     // ADICIONA FAVORITO NO USUÁRIO EXISTENTE
-    if (user) {
+    if (user && game) {
       game.user_id = user._id;
       let newFavorite = await Game.create(game);
       return res.send(newFavorite);
@@ -104,9 +106,13 @@ class GameController {
       user_hash,
     });
 
-    game.user_id = newUser._id;
-    let newFavorite = await Game.create(game);
-    return res.send(newFavorite);
+    if (game) {
+      game.user_id = newUser._id;
+      let newFavorite = await Game.create(game);
+      return res.send(newFavorite);
+    }
+
+    return res.send();
   }
 
   async getFavorites(req, res) {
@@ -114,10 +120,13 @@ class GameController {
     res.set("user-hash", user_hash);
 
     let user = await User.findOne({ user_hash });
-    let favorites = await Game.find({ user_id: user._id });
-    
 
-    return res.send(favorites);
+    if (user) {
+      let favorites = await Game.find({ user_id: user._id });
+      return res.send(favorites);
+    }
+
+    res.send([]);
   }
 
   async deleteFavorite(req, res) {
@@ -126,10 +135,14 @@ class GameController {
     let appid = req.params.appid;
 
     let user = await User.findOne({ user_hash });
-    let gameFavorite = await Game.findOne({ user_id: user._id, appid });
 
-    await Game.deleteOne(gameFavorite);
-    return res.send(gameFavorite);
+    if (user) {
+      let gameFavorite = await Game.findOne({ user_id: user._id, appid });
+      await Game.deleteOne(gameFavorite);
+      return res.send(gameFavorite);
+    }
+
+    res.send();
   }
 }
 
