@@ -2,7 +2,8 @@ const axios = require("axios");
 const redis = require("redis");
 const { User, Game } = require("../database/mongoose");
 
-const URL_ALL_GAMES = "https://api.steampowered.com/ISteamApps/GetAppList/v0002/?format=json";
+const URL_ALL_GAMES =
+  "https://simple-api-selection.herokuapp.com/list-games/?title=champions";
 const URL_ONE_GAME = "https://store.steampowered.com/api/appdetails?appids=";
 
 const redisClient = redis.createClient();
@@ -33,47 +34,32 @@ const setCache = (key, value) => {
 
 class GameController {
   async getAll(req, res) {
-    const games = await getCache("games");
+    let games = await getCache("games");
 
     if (games) {
       return res.send(JSON.parse(games));
     }
 
-    try {
-      const data = await axios.get(URL_ALL_GAMES);
-      const games = data.data.applist.apps;
+    let data = await axios.get(URL_ALL_GAMES);
+    games = data.data.applist.apps.app;
 
-      res.json({ games });
-      await setCache("games", JSON.stringify(games));
-    } catch (error) {
-      return res.status(500).send({
-        message:
-          "Erro na comunicação com o servidor da steam. Verifique se você digitou a url corretamente",
-      });
-    }
+    res.send(games);
+    await setCache("games", JSON.stringify(games));
   }
 
   async getOne(req, res) {
-    const id = req.params.id;
-
-    const game = await getCache(`id-${id}`);
+    let id = req.params.id;
+    let game = await getCache(`id-${id}`);
 
     if (game) {
       return res.send(JSON.parse(game));
     }
 
-    try {
-      const data = await axios.get(`${URL_ONE_GAME}${id}`);
-      const game = data.data;
+    let data = await axios.get(`${URL_ONE_GAME}${id}`);
+    game = data.data;
 
-      res.json({ game });
-      await setCache(`id-${id}`, JSON.stringify(game));
-    } catch (error) {
-      return res.status(500).send({
-        message:
-          "Erro na comunicação com o servidor da steam. Verifique se você digitou a url corretamente",
-      });
-    }
+    res.send(game);
+    await setCache(`id-${id}`, JSON.stringify(game));
   }
 
   async addFavorite(req, res) {
