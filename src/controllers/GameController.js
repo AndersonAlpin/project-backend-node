@@ -64,6 +64,7 @@ class GameController {
 
   async addFavorite(req, res) {
     let user_hash = req.headers["user-hash"];
+    res.set("user-hash", user_hash);
     let { appid, rating } = req.body;
 
     // BUSCA DE UM USUÁRIO
@@ -110,14 +111,18 @@ class GameController {
 
   async getFavorites(req, res) {
     let user_hash = req.headers["user-hash"];
+    res.set("user-hash", user_hash);
+
     let user = await User.findOne({ user_hash });
     let favorites = await Game.find({ user_id: user._id });
+    
 
     return res.send(favorites);
   }
 
   async deleteFavorite(req, res) {
     let user_hash = req.headers["user-hash"];
+    res.set("user-hash", user_hash);
     let appid = req.params.appid;
 
     let user = await User.findOne({ user_hash });
