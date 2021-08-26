@@ -65,127 +65,66 @@ class GameController {
   async addFavorite(req, res) {
     let user_hash = req.headers["user-hash"];
     let { appid, rating } = req.body;
-    let errors = [];
 
-    // VALIDAÇÕES
-    if (isNaN(appid)) {
-      errors.push({ appid: "O campo appid precisa ser um número" });
-    }
+    // BUSCA DE UM USUÁRIO
+    let user = await User.findOne({ user_hash });
 
-    if (!rating || rating < 0 || rating > 5) {
-      errors.push({ rating: "A nota deve ser um valor entre 0 e 5." });
-    }
+    // VERIFICA SE O FAVORITO JÁ ESTÁ CADASTRADO
+    if (user) {
+      let gameFavorite = await Game.findOne({ user_id: user._id, appid });
 
-    if (!isNaN(user_hash) || user_hash.length < 3) {
-      errors.push({
-        "user-hash": "Seu usuário precisa ter no mínimo 3 dígitos.",
-      });
-    }
-
-    if (errors.length > 0) {
-      return res.status(400).json({ errors });
-    }
-
-    try {
-      // BUSCA DE UM USUÁRIO
-      let user = await User.findOne({ user_hash });
-
-      // VERIFICA SE O FAVORITO JÁ ESTÁ CADASTRADO
-      if (user) {
-        let gameFavorite = await Game.findOne({ user_id: user._id, appid });
-
-        if (gameFavorite) {
-          return res
-            .status(409)
-            .send({ message: "Este jogo já esta salvo nos favoritos." });
-        }
+      if (gameFavorite) {
+        return res.send(gameFavorite);
       }
+    }
 
-      // VERIFICA SE POSSUI O JOGO NO CACHE ANTES DE BUSCAR NA STEAM
-      let data = await getCache(`id-${appid}`);
-      let game = JSON.parse(data);
+    // VERIFICA SE POSSUI O JOGO NO CACHE ANTES DE BUSCAR NA STEAM
+    let data = await getCache(`id-${appid}`);
+    let game = JSON.parse(data);
 
-      if (!game) {
-        let data = await axios.get(`${URL_ONE_GAME}${appid}`);
-        game = data.data;
-        await setCache(`id-${appid}`, JSON.stringify(game));
-      }
+    if (!game) {
+      let data = await axios.get(`${URL_ONE_GAME}${appid}`);
+      game = data.data;
+      await setCache(`id-${appid}`, JSON.stringify(game));
+    }
 
-      game.rating = rating;
-      game.appid = appid;
+    game.rating = rating;
+    game.appid = appid;
 
-      // ADICIONA FAVORITO NO USUÁRIO EXISTENTE
-      if (user) {
-        game.user_id = user._id;
-        let newFavorite = await Game.create(game);
-        return res.json({ newFavorite });
-      }
-
-      // ADICIONA UM NOVO USUÁRIO ANTES DE INSERIR UM FAVORITO
-      let newUser = await User.create({
-        user_hash,
-      });
-
-      game.user_id = newUser._id;
+    // ADICIONA FAVORITO NO USUÁRIO EXISTENTE
+    if (user) {
+      game.user_id = user._id;
       let newFavorite = await Game.create(game);
-      return res.json({ newFavorite });
-    } catch (error) {
-      return res
-        .status(500)
-        .send({ error: "Erro na comunicação com o banco de dados." });
+      return res.send(newFavorite);
     }
+
+    // ADICIONA UM NOVO USUÁRIO ANTES DE INSERIR UM FAVORITO
+    let newUser = await User.create({
+      user_hash,
+    });
+
+    game.user_id = newUser._id;
+    let newFavorite = await Game.create(game);
+    return res.send(newFavorite);
   }
 
   async getFavorites(req, res) {
     let user_hash = req.headers["user-hash"];
+    let user = await User.findOne({ user_hash });
+    let favorites = await Game.find({ user_id: user._id });
 
-    try {
-      // BUSCA DE UM USUÁRIO
-      let user = await User.findOne({ user_hash });
-
-      if (!user) {
-        return res
-          .status(404)
-          .json({ "user-hash": "Este usuário não existe." });
-      }
-
-      // RETORNA A LISTA DE FAVORITOS
-      let favorites = await Game.find({ user_id: user._id });
-      return res.json({ favorites });
-    } catch (error) {
-      return res
-        .status(500)
-        .send({ error: "Erro na comunicação com o banco de dados." });
-    }
+    return res.send(favorites);
   }
 
   async deleteFavorite(req, res) {
     let user_hash = req.headers["user-hash"];
     let appid = req.params.appid;
 
-    try {
-      // BUSCA DE UM USUÁRIO
-      let user = await User.findOne({ user_hash });
+    let user = await User.findOne({ user_hash });
+    let gameFavorite = await Game.findOne({ user_id: user._id, appid });
 
-      if (!user) {
-        return res
-          .status(404)
-          .json({ "user-hash": "Este usuário não existe." });
-      }
-
-      // VERIFICA SE O FAVORITO EXISTE ANTES DE TENTAR DELETÁ-LO
-      let gameFavorite = await Game.findOne({ user_id: user._id, appid });
-      if (!gameFavorite) {
-        return res.status(404).send({ message: "Este jogo não existe." });
-      }
-
-      await Game.deleteOne(gameFavorite);
-      return res.send({ message: "Jogo deletado com sucesso." });
-    } catch (error) {
-      return res
-        .status(500)
-        .send({ error: "Erro na comunicação com o banco de dados." });
-    }
+    await Game.deleteOne(gameFavorite);
+    return res.send(gameFavorite);
   }
 }
 
