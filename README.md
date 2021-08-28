@@ -5,6 +5,3 @@ Ele tem como objetivo fazer requisições a uma API de jogos da steam e permitir
 
 ## Link da empresa
 https://appmasters.io
-
-## Link do projeto online
-http://18.217.140.121:3000/
