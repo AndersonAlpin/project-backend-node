@@ -22,7 +22,7 @@ class GameController {
       games = data.data.applist.apps.app;
 
       res.send(games);
-      myCache.set("games", games);
+      await myCache.set("games", games);
     } catch (error) {
       res.status(404).send("Erro na comunicação com o servidor.");
     }
@@ -38,64 +38,60 @@ class GameController {
         return res.send(game);
       }
 
+      // Busca um jogo na steam, retorna para o usuário e salva no cache
       let data = await axios.get(`${URL_ONE_GAME}${id}`);
       game = data.data;
 
       res.send(game);
-      myCache.set(`game-${id}`, game);
+      await myCache.set(`game-${id}`, game);
     } catch (error) {
       res.status(404).send("Erro na comunicação com o servidor.");
     }
   }
 
   async addFavorite(req, res) {
-    let user_hash = req.headers["user-hash"];
-    res.set("user-hash", user_hash);
-    let { appid, rating } = req.body;
-
     try {
-      // BUSCA DE UM USUÁRIO
+      let { appid, rating } = req.body;
+      let user_hash = req.headers["user-hash"];
+      res.set("user-hash", user_hash);
+
+      // Busca um usuário/jogo favorito no banco e busca um jogo no cache
       let user = await User.findOne({ user_hash });
+      let game = await myCache.get(`game-${appid}`);
+      let gameFavorite = await Game.findOne({ user_id: user._id, appid });
 
-      // VERIFICA SE O FAVORITO JÁ ESTÁ CADASTRADO
-      if (user) {
-        let gameFavorite = await Game.findOne({ user_id: user._id, appid });
-
-        if (gameFavorite) {
-          return res.send(gameFavorite);
-        }
-      }
-
-      // VERIFICA SE POSSUI O JOGO NO CACHE ANTES DE BUSCAR NA STEAM
-      let data = await getCache(`id-${appid}`);
-      let game = JSON.parse(data);
-
-      if (!game) {
+      // Verifica se o jogo existe no cache, caso contrário busca na steam e salva no cache
+      if (game) {
+        game.rating = rating;
+        game.appid = appid;
+      } else {
         let data = await axios.get(`${URL_ONE_GAME}${appid}`);
         game = data.data;
-        await setCache(`id-${appid}`, JSON.stringify(game));
+        game.rating = rating;
+        game.appid = appid;
       }
 
-      game.rating = rating;
-      game.appid = appid;
-
-      // ADICIONA FAVORITO NO USUÁRIO EXISTENTE
-      if (user && game) {
-        game.user_id = user._id;
+      // Verifica se o usuário existe
+      if (user) {
+        // Verifica se o game existe no banco de dados
+        if (gameFavorite) {
+          // Retorna o jogo existente nos favoritos
+          return res.send(gameFavorite);
+        } else {
+          // Salva o jogo nos favoritos do usuário existente
+          game.user_id = user._id;
+          let newFavorite = await Game.create(game);
+          return res.send(newFavorite);
+        }
+      } else {
+        // Cria um novo usuário e salva o jogos nos favoritos
+        let newUser = await User.create({ user_hash });
+        game.user_id = newUser._id;
         let newFavorite = await Game.create(game);
         return res.send(newFavorite);
       }
-
-      // ADICIONA UM NOVO USUÁRIO ANTES DE INSERIR UM FAVORITO
-      let newUser = await User.create({
-        user_hash,
-      });
-
-      game.user_id = newUser._id;
-      let newFavorite = await Game.create(game);
-      return res.send(newFavorite);
     } catch (error) {
-      res.send([]);
+      res.status(400).send("Dados inválidos");
     }
   }
 
