@@ -22,7 +22,7 @@ class GameController {
       games = data.data.applist.apps.app;
 
       res.send(games);
-      myCache.set("games", games, 120);
+      myCache.set("games", games);
     } catch (error) {
       res.status(404).send("Erro na comunicação com o servidor.");
     }
@@ -30,20 +30,21 @@ class GameController {
 
   async getOne(req, res) {
     try {
+      // Verifica se o jogo existe no cache e retorna para o usuário
       let id = req.params.id;
-      let game = await getCache(`id-${id}`);
+      let game = await myCache.get(`game-${id}`);
 
       if (game) {
-        return res.send(JSON.parse(game));
+        return res.send(game);
       }
 
       let data = await axios.get(`${URL_ONE_GAME}${id}`);
       game = data.data;
 
       res.send(game);
-      await setCache(`id-${id}`, JSON.stringify(game));
+      myCache.set(`game-${id}`, game);
     } catch (error) {
-      res.send(error);
+      res.status(404).send("Erro na comunicação com o servidor.");
     }
   }
 
