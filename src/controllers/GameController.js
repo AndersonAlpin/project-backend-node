@@ -104,9 +104,13 @@ class GameController {
       let user = await User.findOne({ user_hash });
       let favorites = await Game.find({ user_id: user._id });
 
-      res.send(favorites);
-    } catch (error) {
+      if (favorites) {
+        return res.send(favorites);
+      }
+
       res.send([]);
+    } catch (error) {
+      res.sendStatus(400);
     }
   }
 
