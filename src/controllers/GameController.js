@@ -111,19 +111,21 @@ class GameController {
   }
 
   async deleteFavorite(req, res) {
-    let user_hash = req.headers["user-hash"];
-    res.set("user-hash", user_hash);
-    let appid = req.params.appid;
+    try {
+      let appid = req.params.appid;
+      let user_hash = req.headers["user-hash"];
+      res.set("user-hash", user_hash);
 
-    let user = await User.findOne({ user_hash });
-
-    if (user) {
+      // Busca um favorito de um determinado usuário
+      let user = await User.findOne({ user_hash });
       let gameFavorite = await Game.findOne({ user_id: user._id, appid });
+
+      // Deleta o favorito e retorna para o usuário
       await Game.deleteOne(gameFavorite);
       return res.send(gameFavorite);
+    } catch (error) {
+      res.sendStatus(400);
     }
-
-    res.send();
   }
 }
 
