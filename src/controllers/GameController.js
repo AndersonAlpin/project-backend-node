@@ -9,10 +9,23 @@ const URL_ONE_GAME = "https://store.steampowered.com/api/appdetails?appids=";
 
 class GameController {
   async getAll(req, res) {
-    let data = await axios.get(URL_ALL_GAMES);
-    let games = data.data.applist.apps.app;
+    try {
+      // Verifica se o jogo existe no cache e retorna para o usuário
+      let games = await myCache.get("games");
 
-    res.send(games);
+      if (games) {
+        return res.send(games);
+      }
+
+      // Busca um jogo na steam, retorna para o usuário e salva no cache
+      let data = await axios.get(URL_ALL_GAMES);
+      games = data.data.applist.apps.app;
+
+      res.send(games);
+      myCache.set("games", games, 120);
+    } catch (error) {
+      res.status(404).send("Erro na comunicação com o servidor.");
+    }
   }
 
   async getOne(req, res) {
@@ -30,7 +43,7 @@ class GameController {
       res.send(game);
       await setCache(`id-${id}`, JSON.stringify(game));
     } catch (error) {
-      res.send(error)
+      res.send(error);
     }
   }
 
