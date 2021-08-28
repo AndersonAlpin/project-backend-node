@@ -110,7 +110,7 @@ class GameController {
 
       res.send([]);
     } catch (error) {
-      res.sendStatus(400);
+      res.status(400).send("Dados inválidos");
     }
   }
 
@@ -128,7 +128,7 @@ class GameController {
       await Game.deleteOne(gameFavorite);
       return res.send(gameFavorite);
     } catch (error) {
-      res.sendStatus(400);
+      res.status(400).send("Dados inválidos");
     }
   }
 }
